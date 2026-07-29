@@ -1,3 +1,4 @@
+import ResultCard from "../components/ResultCard";
 import CopyButton from "../components/CopyButton";
 import KeywordChip from "../components/KeywordChip";
 import { useRef, useState } from "react";
@@ -378,7 +379,6 @@ export default function Workspace() {
             </div>
           </div>
         </div>
-
         <div style={{ borderTop: "1px solid var(--line)" }}>
           {queue.length === 0 ? (
             <div
@@ -394,235 +394,15 @@ export default function Workspace() {
           ) : (
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
-                padding: 12,
-                gap: 10,
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 16,
+                padding: 18,
               }}
             >
-              {queue.map((item) => {
-                const b = badgeStyle[item.status];
-                const fullCopyText = `${item.title}\n\n${item.description}\n\nKeywords: ${item.keywords.join(", ")}`;
-                return (
-                  <div
-                    key={item.id}
-                    style={{
-                      background: "var(--bg-inset)",
-                      border: "1px solid var(--line)",
-                      borderRadius: 12,
-                      padding: 14,
-                      position: "relative",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {item.status === "done" && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          height: 2,
-                          background: "var(--fix)",
-                        }}
-                      />
-                    )}
-
-                    <div style={{ display: "flex", gap: 12 }}>
-                      {item.thumbUrl ? (
-                        <img
-                          src={item.thumbUrl}
-                          style={{
-                            width: 56,
-                            height: 56,
-                            borderRadius: 9,
-                            objectFit: "cover",
-                            flexShrink: 0,
-                            border: "1px solid var(--line)",
-                          }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: 56,
-                            height: 56,
-                            borderRadius: 9,
-                            background: "var(--bg)",
-                            flexShrink: 0,
-                          }}
-                        />
-                      )}
-
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: 10,
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 9,
-                              minWidth: 0,
-                            }}
-                          >
-                            <span
-                              className="mono"
-                              style={{
-                                fontSize: 12,
-                                fontWeight: 600,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                maxWidth: 200,
-                              }}
-                            >
-                              {item.file.name}
-                            </span>
-                            <span
-                              className="mono"
-                              style={{
-                                fontSize: 10,
-                                padding: "2px 8px",
-                                borderRadius: 20,
-                                background: b.bg,
-                                color: b.fg,
-                                fontWeight: 600,
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 4,
-                                flexShrink: 0,
-                              }}
-                            >
-                              {item.status === "done" && (
-                                <CheckCircle2 size={10} />
-                              )}{" "}
-                              {b.label}
-                            </span>
-                          </div>
-
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 4,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {item.status === "needs_retry" && (
-                              <button
-                                onClick={() => retryItem(item.id)}
-                                style={rowBtn}
-                              >
-                                <RotateCcw size={11} /> retry
-                              </button>
-                            )}
-                            {item.status === "done" && (
-                              <CopyButton
-                                text={fullCopyText}
-                                label="Copy all"
-                                size={13}
-                              />
-                            )}
-                          </div>
-                        </div>
-
-                        {item.status === "done" ? (
-                          <div style={{ marginTop: 8 }}>
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "flex-start",
-                                justifyContent: "space-between",
-                                gap: 8,
-                              }}
-                            >
-                              <div
-                                style={{
-                                  fontSize: 13,
-                                  color: "var(--text)",
-                                  fontWeight: 600,
-                                  lineHeight: 1.4,
-                                }}
-                              >
-                                {item.title}
-                              </div>
-                              <CopyButton
-                                text={item.title}
-                                label="Copy title"
-                                iconOnly
-                                size={12}
-                              />
-                            </div>
-
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "flex-start",
-                                justifyContent: "space-between",
-                                gap: 8,
-                                marginTop: 4,
-                              }}
-                            >
-                              <div
-                                style={{
-                                  fontSize: 12,
-                                  color: "var(--text-dim)",
-                                  lineHeight: 1.5,
-                                }}
-                              >
-                                {item.description}
-                              </div>
-                              <CopyButton
-                                text={item.description}
-                                label="Copy description"
-                                iconOnly
-                                size={12}
-                              />
-                            </div>
-
-                            <div
-                              style={{
-                                marginTop: 9,
-                                display: "flex",
-                                flexWrap: "wrap",
-                                gap: 5,
-                                alignItems: "center",
-                              }}
-                            >
-                              {item.keywords.map((k, i) => (
-                                <KeywordChip key={i} word={k} />
-                              ))}
-                              <CopyButton
-                                text={item.keywords.join(", ")}
-                                label="Copy all keywords"
-                                iconOnly
-                                size={12}
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <div
-                            style={{
-                              fontSize: 11.5,
-                              color: "var(--text-faint)",
-                              marginTop: 6,
-                            }}
-                          >
-                            {item.kind === "video"
-                              ? "frame captured from video"
-                              : "ready"}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {queue.map((item) => (
+                <ResultCard key={item.id} item={item} onRetry={retryItem} />
+              ))}
             </div>
           )}
         </div>
