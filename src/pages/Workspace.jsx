@@ -4,29 +4,32 @@ import KeywordChip from "../components/KeywordChip";
 import { useRef, useState } from "react";
 import {
   UploadCloud,
+  Globe,
+  Layers,
   Image as ImageIcon,
   Film,
   FileText,
   Shapes,
-  Trash2,
-  Wand2,
+  Tag,
   Download,
   RotateCcw,
   CheckCircle2,
+  Trash2,
+  Wand2,
 } from "lucide-react";
 import { useAppState } from "../store/AppState";
 import { extractVideoFrame, readImageAsBase64 } from "../lib/videoFrame";
 import { generateMetadata } from "../lib/generate";
 
 const platforms = [
-  { id: "general", label: "General" },
-  { id: "adobe", label: "Adobe" },
-  { id: "shutterstock", label: "Shutter" },
-  { id: "istock", label: "iStock" },
-  { id: "getty", label: "Getty" },
-  { id: "pond5", label: "Pond5" },
-  { id: "vecteezy", label: "Vecteezy" },
-  { id: "freepik", label: "Freepik" },
+  { id: "general", label: "General", icon: Globe, color: "var(--safelight)" },
+  { id: "adobe", label: "Adobe", icon: Layers, color: "#ff0000" },
+  { id: "shutterstock", label: "Shutter", icon: ImageIcon, color: "#ff5200" },
+  { id: "istock", label: "iStock", icon: Film, color: "#00b4ff" },
+  { id: "getty", label: "Getty", icon: Tag, color: "#000000" },
+  { id: "pond5", label: "Pond5", icon: Film, color: "#0097a7" },
+  { id: "vecteezy", label: "Vecteezy", icon: Shapes, color: "#00b3e5" },
+  { id: "freepik", label: "Freepik", icon: FileText, color: "#3bb4ff" },
 ];
 
 const badgeStyle = {
@@ -232,30 +235,37 @@ export default function Workspace() {
             <UploadCloud size={17} color="var(--safelight)" /> Upload Workspace
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {platforms.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setSettings((s) => ({ ...s, platform: p.id }))}
-                style={{
-                  padding: "6px 13px",
-                  borderRadius: 20,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  border: `1px solid ${settings.platform === p.id ? "var(--safelight)" : "var(--line)"}`,
-                  background:
-                    settings.platform === p.id
-                      ? "rgba(255,106,61,0.12)"
-                      : "var(--bg-inset)",
-                  color:
-                    settings.platform === p.id
-                      ? "var(--safelight)"
-                      : "var(--text-dim)",
-                }}
-              >
-                {p.label}
-              </button>
-            ))}
+            {platforms.map((p) => {
+              const Icon = p.icon;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setSettings((s) => ({ ...s, platform: p.id }))}
+                  style={{
+                    padding: "6px 13px",
+                    borderRadius: 20,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    border: `1px solid ${settings.platform === p.id ? "var(--safelight)" : "var(--line)"}`,
+                    background:
+                      settings.platform === p.id
+                        ? "rgba(255,106,61,0.12)"
+                        : "var(--bg-inset)",
+                    color:
+                      settings.platform === p.id
+                        ? "var(--safelight)"
+                        : "var(--text-dim)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  {Icon && <Icon size={14} color={p.color} />}
+                  {p.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 

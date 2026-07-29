@@ -1,6 +1,6 @@
-import { Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
-import Workspace from './pages/Workspace';
+import { Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout";
+import Workspace from "./pages/Workspace";
 
 export default function App() {
   return (

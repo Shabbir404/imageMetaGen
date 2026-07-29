@@ -1,19 +1,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
-
+.spin-icon{ animation: spin 1s linear infinite; }
+@keyframes spin{ to{ transform: rotate(360deg); } }
 :root{
-  --bg:#0c0a09;
-  --bg-raised:#151210;
-  --bg-inset:#1c1815;
-  --line:#2b2521;
-  --line-bright:#3d342c;
-  --text:#f2ece4;
-  --text-dim:#9a8f83;
-  --text-faint:#5f564c;
-  --safelight:#ff6a3d;
-  --safelight-dim:#3d2016;
-  --dev:#e8b14c;
-  --fix:#5fd4a8;
-  --stop:#e5525c;
+  --bg:#131316;
+  --bg-raised:#19191d;
+  --bg-inset:#202024;
+  --line:#2a2a30;
+  --line-bright:#3a3a42;
+  --text:#f0eff2;
+  --text-dim:#9a99a3;
+  --text-faint:#63626b;
+  --safelight:#a78bfa;
+  --safelight-dim:#211d30;
+  --dev:#e0a458;
+  --fix:#5fbf8f;
+  --stop:#e0687a;
   --mono:'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
   --display:'Space Grotesk', -apple-system, sans-serif;
 }
@@ -23,7 +24,7 @@ html,body,#root{height:100%;}
 body{
   margin:0;
   background:
-    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(255,106,61,0.06), transparent 60%),
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(167,139,250,0.05), transparent 60%),
     var(--bg);
   color:var(--text);
   font-family:var(--display);
@@ -42,7 +43,7 @@ button{font-family:var(--display);}
   width:16px;height:16px;border-radius:50%;
   background:#fff;
   border:3px solid var(--safelight);
-  box-shadow:0 0 0 4px rgba(255,106,61,0.18), 0 2px 6px rgba(0,0,0,0.4);
+    box-shadow:0 0 0 3px rgba(167,139,250,0.14), 0 2px 6px rgba(0,0,0,0.4);
   cursor:pointer;
   margin-top:0;
 }
@@ -51,7 +52,20 @@ button{font-family:var(--display);}
   border:3px solid var(--safelight);cursor:pointer;
   box-shadow:0 0 0 4px rgba(255,106,61,0.18);
 }
-
+.result-card{
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.result-card:hover{
+  transform: translateY(-3px);
+  border-color: var(--line-bright) !important;
+  box-shadow: 0 16px 36px rgba(0,0,0,0.32) !important;
+}
+.result-card:hover .result-card-img{
+  transform: scale(1.035);
+}
+.result-card-img{
+  transition: transform .35s ease;
+}
 select{
   appearance:none; -webkit-appearance:none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%239a8f83' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
