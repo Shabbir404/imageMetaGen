@@ -1,6 +1,7 @@
 import { buildPrompt, parseJsonResponse, ProviderError } from "./shared";
 
 export async function call(imgBase64, apiKey, opts) {
+  const mimeType = opts?.mimeType || "image/png";
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -21,7 +22,7 @@ export async function call(imgBase64, apiKey, opts) {
               type: "image",
               source: {
                 type: "base64",
-                media_type: "image/jpeg",
+                media_type: mimeType,
                 data: imgBase64,
               },
             },

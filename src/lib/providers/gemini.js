@@ -1,6 +1,7 @@
 import { buildPrompt, parseJsonResponse, ProviderError } from "./shared";
 
 export async function call(imgBase64, apiKey, opts) {
+  const mimeType = opts?.mimeType || "image/png";
   const res = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent",
     {
@@ -11,7 +12,7 @@ export async function call(imgBase64, apiKey, opts) {
           {
             parts: [
               { text: buildPrompt(opts) },
-              { inline_data: { mime_type: "image/jpeg", data: imgBase64 } },
+              { inline_data: { mime_type: mimeType, data: imgBase64 } },
             ],
           },
         ],

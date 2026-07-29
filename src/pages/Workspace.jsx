@@ -19,6 +19,12 @@ import {
 } from "lucide-react";
 import { useAppState } from "../store/AppState";
 import { extractVideoFrame, readImageAsBase64 } from "../lib/videoFrame";
+import {
+  detectFileKind,
+  extractPdfFrame,
+  extractPsdFrame,
+  extractEpsFrame,
+} from "../lib/fileConversion";
 import { generateMetadata } from "../lib/generate";
 
 const platforms = [
@@ -50,9 +56,10 @@ export default function Workspace() {
     const items = Array.from(fileList).map((file) => ({
       id: crypto.randomUUID(),
       file,
-      kind: file.type.startsWith("video") ? "video" : "image",
+      kind: detectFileKind(file),
       thumbUrl: null,
       base64: null,
+      mimeType: null,
       status: "queued",
       title: "",
       description: "",
@@ -63,18 +70,48 @@ export default function Workspace() {
 
     items.forEach(async (item) => {
       try {
-        const { thumbUrl, base64 } =
-          item.kind === "video"
-            ? await extractVideoFrame(item.file)
-            : await readImageAsBase64(item.file);
-        setQueue((prev) =>
-          prev.map((q) => (q.id === item.id ? { ...q, thumbUrl, base64 } : q)),
-        );
-      } catch {
+        let result;
+        switch (item.kind) {
+          case "video":
+            result = await extractVideoFrame(item.file);
+            break;
+          case "pdf":
+            result = await extractPdfFrame(item.file);
+            break;
+          case "psd":
+            result = await extractPsdFrame(item.file);
+            break;
+          case "eps":
+            result = await extractEpsFrame(item.file);
+            break;
+          default:
+            result = await readImageAsBase64(item.file);
+        }
         setQueue((prev) =>
           prev.map((q) =>
             q.id === item.id
-              ? { ...q, status: "needs_retry", error: "frame_extract_failed" }
+              ? {
+                  ...q,
+                  thumbUrl: result.thumbUrl,
+                  base64: result.base64,
+                  mimeType: result.mimeType,
+                }
+              : q,
+          ),
+        );
+      } catch (e) {
+        const isPreviewIssue = e.message?.startsWith("eps_");
+        const label = isPreviewIssue
+          ? "no_preview_available"
+          : "frame_extract_failed";
+        setQueue((prev) =>
+          prev.map((q) =>
+            q.id === item.id
+              ? {
+                  ...q,
+                  status: isPreviewIssue ? "queued" : "needs_retry",
+                  error: label,
+                }
               : q,
           ),
         );
@@ -84,7 +121,9 @@ export default function Workspace() {
 
   async function runBatch() {
     setProcessing(true);
-    const pending = queue.filter((q) => q.status === "queued" && q.base64);
+    const pending = queue.filter(
+      (q) => q.status === "queued" && (q.base64 || q.kind === "eps"),
+    );
     let idx = 0;
 
     async function worker() {
@@ -98,12 +137,14 @@ export default function Workspace() {
         try {
           const result = await generateMetadata({
             imgBase64: item.base64,
+            mimeType: item.mimeType,
             keysRef,
             setKeys,
             titleLen: settings.titleLen,
             descLen: settings.descLen,
             kwCount: settings.kwCount,
             customPrompt: settings.customPrompt,
+            platform: settings.platform,
           });
           setQueue((prev) =>
             prev.map((q) =>
@@ -122,7 +163,11 @@ export default function Workspace() {
           setQueue((prev) =>
             prev.map((q) =>
               q.id === item.id
-                ? { ...q, status: "needs_retry", error: e.message }
+                ? {
+                    ...q,
+                    status: "needs_retry",
+                    error: e.message || "generation_failed",
+                  }
                 : q,
             ),
           );
@@ -324,7 +369,7 @@ export default function Workspace() {
               ref={fileInputRef}
               type="file"
               multiple
-              accept="image/*,video/*"
+              accept="image/*,video/*,.pdf,.ai,.psd,.eps,application/pdf,application/postscript,image/vnd.adobe.photoshop"
               style={{ display: "none" }}
               onChange={(e) => onFiles(e.target.files)}
             />

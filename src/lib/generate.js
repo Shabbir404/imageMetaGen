@@ -27,17 +27,23 @@ function sleep(ms) {
 
 export async function generateMetadata({
   imgBase64,
+  mimeType,
   keysRef,
   setKeys,
   titleLen,
   descLen,
   kwCount,
   customPrompt,
+  platform,
 }) {
   const excluded = [];
   let lastErr = null;
   const maxAttempts = Math.min(6, Math.max(2, keysRef.current.length * 2));
-  const opts = { titleLen, descLen, kwCount, customPrompt };
+  const opts = { titleLen, descLen, kwCount, customPrompt, platform };
+
+  if (!imgBase64) {
+    throw new Error("missing_image_data");
+  }
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const key = nextAvailableKey(keysRef, setKeys, excluded);
@@ -56,6 +62,7 @@ export async function generateMetadata({
       const result = await provider.call(imgBase64, key.value, {
         ...opts,
         model: key.model,
+        mimeType,
       });
       markKeyStatus(keysRef, setKeys, key.id, "ok");
       return result;

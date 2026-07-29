@@ -2,6 +2,7 @@ import { buildPrompt, parseJsonResponse, ProviderError } from "./shared";
 
 export async function call(imgBase64, apiKey, opts) {
   const model = opts.model || "google/gemini-2.5-flash";
+  const mimeType = opts?.mimeType || "image/png";
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -17,7 +18,7 @@ export async function call(imgBase64, apiKey, opts) {
             { type: "text", text: buildPrompt(opts) },
             {
               type: "image_url",
-              image_url: { url: `data:image/jpeg;base64,${imgBase64}` },
+              image_url: { url: `data:${mimeType};base64,${imgBase64}` },
             },
           ],
         },

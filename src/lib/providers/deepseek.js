@@ -4,6 +4,7 @@ import { buildPrompt, parseJsonResponse, ProviderError } from "./shared";
 // If this consistently fails for you, route DeepSeek keys through
 // OpenRouter instead (openrouter.js already handles that).
 export async function call(imgBase64, apiKey, opts) {
+  const mimeType = opts?.mimeType || "image/png";
   let res;
   try {
     res = await fetch("https://api.deepseek.com/chat/completions", {
@@ -21,7 +22,7 @@ export async function call(imgBase64, apiKey, opts) {
               { type: "text", text: buildPrompt(opts) },
               {
                 type: "image_url",
-                image_url: { url: `data:image/jpeg;base64,${imgBase64}` },
+                image_url: { url: `data:${mimeType};base64,${imgBase64}` },
               },
             ],
           },
