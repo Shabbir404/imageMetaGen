@@ -54,7 +54,7 @@ export default function Navbar() {
                 letterSpacing: ".08em",
               }}
             >
-              AI METADATA GENERATOR
+              Free AI meta data genaretor
             </div>
           </div>
         </div>
