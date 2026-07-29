@@ -51,6 +51,42 @@ export async function extractPsdFrame(file) {
 import UTIF from "utif";
 import { decodeEpsiPreviewPixels } from "./epsPreview";
 
+export async function createEpsPlaceholderPreview(fileName = "eps-preview") {
+  const canvas = document.createElement("canvas");
+  canvas.width = 900;
+  canvas.height = 600;
+  const ctx = canvas.getContext("2d");
+
+  const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradient.addColorStop(0, "#17120f");
+  gradient.addColorStop(1, "#3b2417");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "rgba(255, 226, 188, 0.16)";
+  ctx.fillRect(70, 90, 760, 420);
+
+  ctx.strokeStyle = "rgba(255, 203, 125, 0.78)";
+  ctx.lineWidth = 5;
+  ctx.setLineDash([16, 10]);
+  ctx.strokeRect(110, 130, 680, 340);
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = "rgba(255,255,255,0.90)";
+  ctx.font = "bold 34px sans-serif";
+  ctx.fillText("EPS preview", 110, 220);
+
+  ctx.fillStyle = "rgba(249,239,226,0.82)";
+  ctx.font = "24px sans-serif";
+  const label = (fileName || "vector artwork").slice(0, 34);
+  ctx.fillText(label, 110, 270);
+
+  ctx.font = "20px sans-serif";
+  ctx.fillText("Preparing high-resolution PNG preview…", 110, 330);
+
+  return canvasToImagePayload(canvas, "image/png");
+}
+
 export async function extractEpsFrame(file) {
   const buf = new Uint8Array(await file.arrayBuffer());
   const text = new TextDecoder("latin1").decode(buf.slice(0, 220000));

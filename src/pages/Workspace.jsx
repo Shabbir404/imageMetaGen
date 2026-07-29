@@ -20,11 +20,33 @@ import {
 import { useAppState } from "../store/AppState";
 import { extractVideoFrame, readImageAsBase64 } from "../lib/videoFrame";
 import {
+  createEpsPlaceholderPreview,
   detectFileKind,
   extractPdfFrame,
   extractPsdFrame,
   extractEpsFrame,
 } from "../lib/fileConversion";
+
+async function requestEpsPreview(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch("http://localhost:3001/api/eps/preview", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error("eps_preview_failed");
+  }
+
+  const data = await response.json();
+  return {
+    thumbUrl: data.previewUrl,
+    base64: data.previewUrl?.split(",")[1] || null,
+    mimeType: data.mimeType || "image/png",
+  };
+}
 import { generateMetadata } from "../lib/generate";
 
 const platforms = [
@@ -56,7 +78,14 @@ const csvSchemas = {
     ],
   },
   adobe: {
-    headers: ["Filename", "Title", "Description", "Keywords", "Category", "Releases"],
+    headers: [
+      "Filename",
+      "Title",
+      "Description",
+      "Keywords",
+      "Category",
+      "Releases",
+    ],
     buildRow: (item) => [
       item.file.name,
       item.title,
@@ -89,7 +118,15 @@ const csvSchemas = {
     ],
   },
   istock: {
-    headers: ["Filename", "Title", "Description", "Keywords", "Date Created", "Country", "City"],
+    headers: [
+      "Filename",
+      "Title",
+      "Description",
+      "Keywords",
+      "Date Created",
+      "Country",
+      "City",
+    ],
     buildRow: (item) => [
       item.file.name,
       item.title,
@@ -101,7 +138,15 @@ const csvSchemas = {
     ],
   },
   getty: {
-    headers: ["Filename", "Title", "Description", "Keywords", "Date Created", "Country", "City"],
+    headers: [
+      "Filename",
+      "Title",
+      "Description",
+      "Keywords",
+      "Date Created",
+      "Country",
+      "City",
+    ],
     buildRow: (item) => [
       item.file.name,
       item.title,
@@ -113,7 +158,15 @@ const csvSchemas = {
     ],
   },
   pond5: {
-    headers: ["Filename", "Title", "Description", "Keywords", "Price", "City", "Country"],
+    headers: [
+      "Filename",
+      "Title",
+      "Description",
+      "Keywords",
+      "Price",
+      "City",
+      "Country",
+    ],
     buildRow: (item) => [
       item.file.name,
       item.title,
@@ -135,7 +188,14 @@ const csvSchemas = {
     ],
   },
   freepik: {
-    headers: ["File name", "Title", "Description", "Keywords", "Prompt", "Model"],
+    headers: [
+      "File name",
+      "Title",
+      "Description",
+      "Keywords",
+      "Prompt",
+      "Model",
+    ],
     buildRow: (item) => [
       item.file.name,
       item.title,
@@ -153,7 +213,9 @@ export default function Workspace() {
   const [dragOver, setDragOver] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [showCsvPicker, setShowCsvPicker] = useState(false);
-  const [csvPlatform, setCsvPlatform] = useState(settings.platform || "general");
+  const [csvPlatform, setCsvPlatform] = useState(
+    settings.platform || "general",
+  );
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -173,11 +235,67 @@ export default function Workspace() {
       description: "",
       keywords: [],
       error: null,
+      preview: { status: "ready", thumbUrl: null, mimeType: null },
     }));
     setQueue((prev) => [...prev, ...items]);
 
     items.forEach(async (item) => {
       try {
+        if (item.kind === "eps") {
+          const placeholder = await createEpsPlaceholderPreview(item.file.name);
+          setQueue((prev) =>
+            prev.map((q) =>
+              q.id === item.id
+                ? {
+                    ...q,
+                    thumbUrl: placeholder.thumbUrl,
+                    preview: {
+                      status: "loading",
+                      thumbUrl: placeholder.thumbUrl,
+                      mimeType: placeholder.mimeType,
+                    },
+                  }
+                : q,
+            ),
+          );
+
+          try {
+            const serverPreview = await requestEpsPreview(item.file);
+            setQueue((prev) =>
+              prev.map((q) =>
+                q.id === item.id
+                  ? {
+                      ...q,
+                      thumbUrl: serverPreview.thumbUrl,
+                      base64: serverPreview.base64,
+                      mimeType: serverPreview.mimeType,
+                      preview: {
+                        status: "ready",
+                        thumbUrl: serverPreview.thumbUrl,
+                        mimeType: serverPreview.mimeType,
+                      },
+                    }
+                  : q,
+              ),
+            );
+          } catch {
+            setQueue((prev) =>
+              prev.map((q) =>
+                q.id === item.id
+                  ? {
+                      ...q,
+                      preview: {
+                        status: "ready",
+                        thumbUrl: placeholder.thumbUrl,
+                        mimeType: placeholder.mimeType,
+                      },
+                    }
+                  : q,
+              ),
+            );
+          }
+        }
+
         let result;
         switch (item.kind) {
           case "video":
@@ -203,6 +321,11 @@ export default function Workspace() {
                   thumbUrl: result.thumbUrl,
                   base64: result.base64,
                   mimeType: result.mimeType,
+                  preview: {
+                    status: "ready",
+                    thumbUrl: result.thumbUrl,
+                    mimeType: result.mimeType,
+                  },
                 }
               : q,
           ),
@@ -219,6 +342,11 @@ export default function Workspace() {
                   ...q,
                   status: isPreviewIssue ? "queued" : "needs_retry",
                   error: label,
+                  preview: {
+                    status: "error",
+                    thumbUrl: q.preview?.thumbUrl || q.thumbUrl || null,
+                    mimeType: q.preview?.mimeType || q.mimeType || null,
+                  },
                 }
               : q,
           ),
@@ -305,7 +433,10 @@ export default function Workspace() {
     const esc = (s) => `"${String(s ?? "").replace(/"/g, '""')}"`;
     const header = `${schema.headers.join(",")}\n`;
     const rows = done.map((item) =>
-      schema.buildRow(item).map((value) => esc(value)).join(","),
+      schema
+        .buildRow(item)
+        .map((value) => esc(value))
+        .join(","),
     );
     const blob = new Blob([header + rows.join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -519,7 +650,14 @@ export default function Workspace() {
                 </span>
               )}
             </div>
-            <div style={{ display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 9,
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
               <button onClick={() => setQueue([])} style={ghostBtn}>
                 <Trash2 size={14} /> Clear
               </button>
@@ -531,7 +669,14 @@ export default function Workspace() {
                 <Wand2 size={14} />{" "}
                 {processing ? "Generating…" : "Generate Batch"}
               </button>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
                 <button
                   onClick={() => {
                     if (doneCount > 0) {
@@ -572,7 +717,10 @@ export default function Workspace() {
                         </option>
                       ))}
                     </select>
-                    <button onClick={() => downloadCsv(csvPlatform)} style={greenBtn}>
+                    <button
+                      onClick={() => downloadCsv(csvPlatform)}
+                      style={greenBtn}
+                    >
                       Export
                     </button>
                   </div>

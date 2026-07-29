@@ -95,8 +95,36 @@ export default function ResultCard({ item, onRetry }) {
               height: "100%",
               objectFit: "cover",
               display: "block",
+              filter:
+                item.preview?.status === "loading" ? "blur(14px)" : "none",
+              transform:
+                item.preview?.status === "loading" ? "scale(1.04)" : "none",
             }}
           />
+        )}
+
+        {item.preview?.status === "loading" && (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              background: "rgba(10, 8, 12, 0.52)",
+              backdropFilter: "blur(10px)",
+              color: "#fff",
+            }}
+          >
+            <Loader2 size={26} className="spin-icon" />
+            <div
+              style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.04em" }}
+            >
+              Preparing EPS preview…
+            </div>
+          </div>
         )}
 
         {/* scrim so badges never fight the photo */}
