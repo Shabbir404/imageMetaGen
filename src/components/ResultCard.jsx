@@ -20,17 +20,33 @@ const badgeStyle = {
 
 export default function ResultCard({ item, onRetry }) {
   const [expanded, setExpanded] = useState(false);
+  const [showFullTitle, setShowFullTitle] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const b = badgeStyle[item.status];
   const fullCopyText =
     item.status === "done"
       ? `${item.title}\n\n${item.description}\n\nKeywords: ${item.keywords.join(", ")}`
       : "";
-  const visibleTags = expanded ? item.keywords : item.keywords.slice(0, 3);
-  const hiddenCount = item.keywords.length - 3;
+
+  const titleWords = item.title.trim().split(/\s+/).filter(Boolean);
+  const descriptionWords = item.description.trim().split(/\s+/).filter(Boolean);
+  const titleTruncated = titleWords.length > 7;
+  const descriptionTruncated = descriptionWords.length > 15;
+  const titleText =
+    showFullTitle || !titleTruncated
+      ? item.title
+      : `${titleWords.slice(0, 7).join(" ")}…`;
+  const descriptionText =
+    showFullDescription || !descriptionTruncated
+      ? item.description
+      : `${descriptionWords.slice(0, 15).join(" ")}…`;
+  const visibleTags = expanded ? item.keywords : item.keywords.slice(0, 6);
+  const hiddenCount = item.keywords.length - 6;
 
   return (
     <div
       style={{
+        width: 300,
         background: "var(--bg-raised)",
         border: "1px solid var(--line)",
         borderRadius: 14,
@@ -44,9 +60,10 @@ export default function ResultCard({ item, onRetry }) {
       <div
         style={{
           position: "relative",
-          width: "100%",
-          aspectRatio: "4 / 3",
+          width: 300,
+          height: 220,
           background: "var(--bg-inset)",
+          flexShrink: 0,
         }}
       >
         {item.thumbUrl && (
@@ -150,13 +167,36 @@ export default function ResultCard({ item, onRetry }) {
             >
               <div
                 style={{
-                  fontSize: 13.5,
-                  fontWeight: 700,
-                  lineHeight: 1.35,
-                  color: "var(--text)",
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
                 }}
               >
-                {item.title}
+                <div
+                  style={{
+                    fontSize: 13.5,
+                    fontWeight: 700,
+                    lineHeight: 1.35,
+                    color: "var(--text)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "-webkit-box",
+                    WebkitLineClamp: showFullTitle ? "none" : 2,
+                    WebkitBoxOrient: "vertical",
+                  }}
+                >
+                  {titleText}
+                </div>
+                {titleTruncated && (
+                  <button
+                    onClick={() => setShowFullTitle((value) => !value)}
+                    style={viewMoreBtn}
+                  >
+                    {showFullTitle ? "Show less" : "Full title"}
+                  </button>
+                )}
               </div>
               <CopyButton
                 text={item.title}
@@ -176,12 +216,35 @@ export default function ResultCard({ item, onRetry }) {
             >
               <div
                 style={{
-                  fontSize: 12,
-                  color: "var(--text-dim)",
-                  lineHeight: 1.5,
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
                 }}
               >
-                {item.description}
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "var(--text-dim)",
+                    lineHeight: 1.5,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "-webkit-box",
+                    WebkitLineClamp: showFullDescription ? "none" : 3,
+                    WebkitBoxOrient: "vertical",
+                  }}
+                >
+                  {descriptionText}
+                </div>
+                {descriptionTruncated && (
+                  <button
+                    onClick={() => setShowFullDescription((value) => !value)}
+                    style={viewMoreBtn}
+                  >
+                    {showFullDescription ? "Show less" : "View full"}
+                  </button>
+                )}
               </div>
               <CopyButton
                 text={item.description}
@@ -203,6 +266,12 @@ export default function ResultCard({ item, onRetry }) {
               {visibleTags.map((k, i) => (
                 <KeywordChip key={i} word={k} />
               ))}
+              <CopyButton
+                text={item.keywords.join(", ")}
+                label="Copy tags"
+                iconOnly
+                size={12}
+              />
               {!expanded && hiddenCount > 0 && (
                 <button onClick={() => setExpanded(true)} style={viewMoreBtn}>
                   +{hiddenCount} more <ChevronDown size={11} />
