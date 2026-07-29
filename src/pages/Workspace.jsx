@@ -1,7 +1,7 @@
 import ResultCard from "../components/ResultCard";
 import CopyButton from "../components/CopyButton";
 import KeywordChip from "../components/KeywordChip";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   UploadCloud,
   Globe,
@@ -45,12 +45,120 @@ const badgeStyle = {
   needs_retry: { bg: "#2a1315", fg: "var(--stop)", label: "Needs retry" },
 };
 
+const csvSchemas = {
+  general: {
+    headers: ["filename", "title", "description", "keywords"],
+    buildRow: (item) => [
+      item.file.name,
+      item.title,
+      item.description,
+      item.keywords.join(", "),
+    ],
+  },
+  adobe: {
+    headers: ["Filename", "Title", "Description", "Keywords", "Category", "Releases"],
+    buildRow: (item) => [
+      item.file.name,
+      item.title,
+      item.description,
+      item.keywords.join(", "),
+      "",
+      "",
+    ],
+  },
+  shutterstock: {
+    headers: [
+      "Filename",
+      "Title",
+      "Description",
+      "Keywords",
+      "Categories",
+      "Illustration",
+      "Editorial",
+      "Mature Content",
+    ],
+    buildRow: (item) => [
+      item.file.name,
+      item.description || item.title,
+      (item.description || item.title).slice(0, 150),
+      item.keywords.join(", "),
+      "",
+      "",
+      "",
+      "",
+    ],
+  },
+  istock: {
+    headers: ["Filename", "Title", "Description", "Keywords", "Date Created", "Country", "City"],
+    buildRow: (item) => [
+      item.file.name,
+      item.title,
+      item.description,
+      item.keywords.join(", "),
+      "",
+      "",
+      "",
+    ],
+  },
+  getty: {
+    headers: ["Filename", "Title", "Description", "Keywords", "Date Created", "Country", "City"],
+    buildRow: (item) => [
+      item.file.name,
+      item.title,
+      item.description,
+      item.keywords.join(", "),
+      "",
+      "",
+      "",
+    ],
+  },
+  pond5: {
+    headers: ["Filename", "Title", "Description", "Keywords", "Price", "City", "Country"],
+    buildRow: (item) => [
+      item.file.name,
+      item.title,
+      item.description,
+      item.keywords.join(", "),
+      "",
+      "",
+      "",
+    ],
+  },
+  vecteezy: {
+    headers: ["Filename", "Title", "Description", "Keywords", "License"],
+    buildRow: (item) => [
+      item.file.name,
+      item.title,
+      item.description,
+      item.keywords.join(", "),
+      "",
+    ],
+  },
+  freepik: {
+    headers: ["File name", "Title", "Description", "Keywords", "Prompt", "Model"],
+    buildRow: (item) => [
+      item.file.name,
+      item.title,
+      item.title,
+      item.keywords.join(", "),
+      "",
+      "",
+    ],
+  },
+};
+
 export default function Workspace() {
   const { keys, setKeys, keysRef, queue, setQueue, settings, setSettings } =
     useAppState();
   const [dragOver, setDragOver] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [showCsvPicker, setShowCsvPicker] = useState(false);
+  const [csvPlatform, setCsvPlatform] = useState(settings.platform || "general");
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    setCsvPlatform(settings.platform || "general");
+  }, [settings.platform]);
 
   function onFiles(fileList) {
     const items = Array.from(fileList).map((file) => ({
@@ -189,25 +297,24 @@ export default function Workspace() {
     );
   }
 
-  function downloadCsv() {
+  function downloadCsv(platformId = csvPlatform) {
     const done = queue.filter((q) => q.status === "done");
-    const esc = (s) => `"${(s || "").replace(/"/g, '""')}"`;
-    const header = "Filename,Title,Description,Keywords\n";
+    if (done.length === 0) return;
+
+    const schema = csvSchemas[platformId] || csvSchemas.general;
+    const esc = (s) => `"${String(s ?? "").replace(/"/g, '""')}"`;
+    const header = `${schema.headers.join(",")}\n`;
     const rows = done.map((item) =>
-      [
-        esc(item.file.name),
-        esc(item.title),
-        esc(item.description),
-        esc(item.keywords.join(", ")),
-      ].join(","),
+      schema.buildRow(item).map((value) => esc(value)).join(","),
     );
     const blob = new Blob([header + rows.join("\n")], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `metadata_${settings.platform}_${Date.now()}.csv`;
+    a.download = `metadata_${platformId}_${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    setShowCsvPicker(false);
   }
 
   const doneCount = queue.filter((q) => q.status === "done").length;
@@ -412,7 +519,7 @@ export default function Workspace() {
                 </span>
               )}
             </div>
-            <div style={{ display: "flex", gap: 9 }}>
+            <div style={{ display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap" }}>
               <button onClick={() => setQueue([])} style={ghostBtn}>
                 <Trash2 size={14} /> Clear
               </button>
@@ -424,13 +531,53 @@ export default function Workspace() {
                 <Wand2 size={14} />{" "}
                 {processing ? "Generating…" : "Generate Batch"}
               </button>
-              <button
-                onClick={downloadCsv}
-                disabled={doneCount === 0}
-                style={{ ...greenBtn, opacity: doneCount ? 1 : 0.4 }}
-              >
-                <Download size={14} /> Download CSV
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  onClick={() => {
+                    if (doneCount > 0) {
+                      setShowCsvPicker((value) => !value);
+                    }
+                  }}
+                  disabled={doneCount === 0}
+                  style={{ ...greenBtn, opacity: doneCount ? 1 : 0.4 }}
+                >
+                  <Download size={14} /> Download CSV
+                </button>
+                {showCsvPicker && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "8px 10px",
+                      borderRadius: 10,
+                      border: "1px solid var(--line)",
+                      background: "var(--bg-inset)",
+                    }}
+                  >
+                    <select
+                      value={csvPlatform}
+                      onChange={(e) => setCsvPlatform(e.target.value)}
+                      style={{
+                        background: "var(--bg-raised)",
+                        color: "var(--text)",
+                        border: "1px solid var(--line)",
+                        borderRadius: 8,
+                        padding: "7px 9px",
+                      }}
+                    >
+                      {platforms.map((platform) => (
+                        <option key={platform.id} value={platform.id}>
+                          {platform.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button onClick={() => downloadCsv(csvPlatform)} style={greenBtn}>
+                      Export
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
