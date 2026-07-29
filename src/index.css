@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --bg:#0c0a09;
+  --bg-raised:#151210;
+  --bg-inset:#1c1815;
+  --line:#2b2521;
+  --line-bright:#3d342c;
+  --text:#f2ece4;
+  --text-dim:#9a8f83;
+  --text-faint:#5f564c;
+  --safelight:#ff6a3d;
+  --safelight-dim:#3d2016;
+  --dev:#e8b14c;
+  --fix:#5fd4a8;
+  --stop:#e5525c;
+  --mono:'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  --display:'Space Grotesk', -apple-system, sans-serif;
+}
+
+*{box-sizing:border-box;}
+html,body,#root{height:100%;}
+body{
+  margin:0;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(255,106,61,0.06), transparent 60%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--display);
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;}
+button{font-family:var(--display);}
+::selection{background:var(--safelight);color:#1a0d06;}
+
+.sprockets{display:flex;gap:6px;padding:0 2px;}
+.sprockets span{width:6px;height:6px;border-radius:1px;background:var(--line-bright);flex-shrink:0;}
+.mono{font-family:var(--mono);}
+
+.slider-input::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:16px;height:16px;border-radius:50%;
+  background:#fff;
+  border:3px solid var(--safelight);
+  box-shadow:0 0 0 4px rgba(255,106,61,0.18), 0 2px 6px rgba(0,0,0,0.4);
+  cursor:pointer;
+  margin-top:0;
+}
+.slider-input::-moz-range-thumb{
+  width:16px;height:16px;border-radius:50%;background:#fff;
+  border:3px solid var(--safelight);cursor:pointer;
+  box-shadow:0 0 0 4px rgba(255,106,61,0.18);
+}
+
+select{
+  appearance:none; -webkit-appearance:none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%239a8f83' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  padding-right:32px !important;
+}
+
+textarea{resize:vertical;font-family:var(--display);}
+
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--line-bright);border-radius:5px;}
+::-webkit-scrollbar-thumb:hover{background:#4a3e33;}
